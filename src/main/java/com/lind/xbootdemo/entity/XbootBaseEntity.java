@@ -57,4 +57,7 @@ public abstract class XbootBaseEntity implements Serializable {
 
     @ApiModelProperty(value = "删除标志 默认0")
     private Integer delFlag = 0;
+
+    @ApiModelProperty(value = "租户ID")
+    private String tenantId;
 }
