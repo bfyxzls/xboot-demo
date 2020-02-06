@@ -11,3 +11,10 @@ spring:
     show-sql: true
     generate-ddl: true
     hibernate.ddl-auto: update #有变更时自动建立表
+---
+spring:
+  profiles: test
+  datasource:
+    platform: h2
+    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:testdb
