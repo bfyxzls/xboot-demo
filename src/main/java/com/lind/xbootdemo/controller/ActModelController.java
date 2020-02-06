@@ -1,9 +1,11 @@
 package com.lind.xbootdemo.controller;
 
 import cn.hutool.core.date.DateTime;
+import com.lind.xbootdemo.annotation.SystemLog;
 import com.lind.xbootdemo.dao.ActLeaveDao;
 import com.lind.xbootdemo.entity.ActLeave;
 import com.lind.xbootdemo.entity.ActModel;
+import com.lind.xbootdemo.enums.LogType;
 import com.lind.xbootdemo.service.ActModelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +23,7 @@ public class ActModelController {
     @Autowired
     ActLeaveDao actLeaveDao;
 
+    @SystemLog(description = "模型添加", type = LogType.OPERATION)
     @GetMapping("/act/add")
     public String addModel() {
         log.info("add a model");
