@@ -7,12 +7,17 @@ package com.lind.xbootdemo.enums;
 public enum LogType {
 
     /**
-     * 默认0操作
+     * 操作.
      */
     OPERATION,
 
     /**
-     * 1登录
+     * 登录.
      */
-    LOGIN
+    LOGIN,
+
+    /**
+     * 登出.
+     */
+    LOGOUT,
 }

@@ -1,7 +1,10 @@
 package com.lind.xbootdemo.aop;
 
 import com.lind.xbootdemo.annotation.SystemLog;
-import com.lind.xbootdemo.entity.Log;
+import com.lind.xbootdemo.entity.LogModel;
+import com.lind.xbootdemo.service.LogService;
+import com.lind.xbootdemo.utils.IpInfoUtil;
+import com.lind.xbootdemo.utils.ObjectUtil;
 import com.lind.xbootdemo.utils.ThreadPoolUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
@@ -9,16 +12,21 @@ import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NamedThreadLocal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * Spring AOP实现日志管理
+ * Spring AOP实现日志管理.
  *
  * @author Exrickx
  */
@@ -28,9 +36,15 @@ import java.util.Map;
 public class SystemLogAspect {
 
     private static final ThreadLocal<Date> beginTimeThreadLocal = new NamedThreadLocal<Date>("ThreadLocal beginTime");
+    @Autowired
+    LogService logService;
+    @Autowired(required = false)
+    private HttpServletRequest request;
+    @Autowired
+    private IpInfoUtil ipInfoUtil;
 
     /**
-     * 获取注解中对方法的描述信息 用于Controller层注解
+     * 获取注解中对方法的描述信息 用于Controller层注解.
      *
      * @param joinPoint 切点
      * @return 方法描述
@@ -71,7 +85,7 @@ public class SystemLogAspect {
     }
 
     /**
-     * Controller层切点,注解方式
+     * Controller层切点,注解方式.
      */
     //@Pointcut("execution(* *..controller..*Controller*.*(..))")
     @Pointcut("@annotation(com.lind.xbootdemo.annotation.SystemLog)")
@@ -80,7 +94,7 @@ public class SystemLogAspect {
     }
 
     /**
-     * 前置通知 (在方法执行之前返回)用于拦截Controller层记录用户的操作的开始时间
+     * 前置通知 (在方法执行之前返回)用于拦截Controller层记录用户的操作的开始时间.
      *
      * @param joinPoint 切点
      * @throws InterruptedException
@@ -94,21 +108,44 @@ public class SystemLogAspect {
     }
 
     /**
-     * 后置通知(在方法执行之后返回) 用于拦截Controller层操作
+     * 后置通知(在方法执行之后返回) 用于拦截Controller层操作.
      *
      * @param joinPoint 切点
      */
     @After("controllerAspect()")
     public void after(JoinPoint joinPoint) {
         try {
-
-
-            Log log = new Log();
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            List<GrantedAuthority> grantedAuthorities = Arrays.asList(new GrantedAuthority() {
+                @Override
+                public String getAuthority() {
+                    return "read";
+                }
+            });
+            UserDetails user = new User("test", "test", grantedAuthorities);
+            if (authentication != null) {
+                user = (UserDetails) authentication.getPrincipal();
+            }
+            String username = user.getUsername();
+            LogModel log = new LogModel();
 
             //日志标题
             log.setName(getControllerMethodInfo(joinPoint).get("description").toString());
             //日志类型
             log.setLogType((int) getControllerMethodInfo(joinPoint).get("type"));
+            //日志请求url
+            log.setRequestUrl(request.getRequestURI());
+            //请求方式
+            log.setRequestType(request.getMethod());
+            //请求参数
+            Map<String, String[]> logParams = request.getParameterMap();
+            log.setMapToParams(logParams);
+            //请求用户
+            log.setUsername(username);
+            //请求IP
+            log.setIp(ipInfoUtil.getIpAddr(request));
+            //IP地址
+            log.setIpInfo(ipInfoUtil.getIpCity(request));
             //请求开始时间
             Date logStartTime = beginTimeThreadLocal.get();
 
@@ -117,29 +154,30 @@ public class SystemLogAspect {
             //请求耗时
             Long logElapsedTime = endTime - beginTime;
             log.setCostTime(logElapsedTime.intValue());
+            ipInfoUtil.getInfo(request, ObjectUtil.mapToStringAll(request.getParameterMap()));
 
             //调用线程保存至ES
-            ThreadPoolUtil.getPool().execute(new SaveSystemLogThread(log));
-
+            ThreadPoolUtil.getPool().execute(new SaveSystemLogThread(log, logService));
         } catch (Exception e) {
             log.error("AOP后置通知异常", e);
         }
     }
 
     /**
-     * 保存日志至数据库
+     * 保存日志至数据库.
      */
     private static class SaveSystemLogThread implements Runnable {
-        Log log;
+        LogModel logModel;
+        LogService logService;
 
-        public SaveSystemLogThread(Log log) {
-            this.log = log;
+        public SaveSystemLogThread(LogModel logModel, LogService logService) {
+            this.logModel = logModel;
+            this.logService = logService;
         }
 
         @Override
         public void run() {
-
-            System.out.println(log);
+            logService.save(logModel);
         }
     }
 

@@ -18,7 +18,7 @@ import java.util.Map;
 @Table(name = "t_log")
 @TableName("t_log")
 @ApiModel(value = "日志")
-public class Log extends XbootBaseEntity {
+public class LogModel extends XbootBaseEntity {
 
     private static final long serialVersionUID = 1L;
 
