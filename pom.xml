@@ -5,14 +5,20 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.lind</groupId>
-    <artifactId>xboot-demo</artifactId>
+    <artifactId>xboot</artifactId>
+    <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
+    <modules>
+        <module>xboot-demo</module>
+    </modules>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.0.4.RELEASE</version>
     </parent>
+
 
     <properties>
         <spring-cloud.version>Finchley.RELEASE</spring-cloud.version>
@@ -39,8 +45,8 @@
         <checkstyle.config.location>checkstyle.xml</checkstyle.config.location>
         <elasticsearch.version>6.4.1</elasticsearch.version>
         <spring.data.elasticsearch.version>3.1.0.RELEASE</spring.data.elasticsearch.version>
+        <beetl.version>2.9.10</beetl.version>
     </properties>
-
 
     <dependencies>
         <dependency>
@@ -185,6 +191,18 @@
             <artifactId>embedded-redis</artifactId>
             <version>0.6</version>
         </dependency>
+        <!-- Beetl代码生成使用 -->
+        <dependency>
+            <groupId>com.ibeetl</groupId>
+            <artifactId>beetl</artifactId>
+            <version>${beetl.version}</version>
+        </dependency>
+        <!-- Mybatis-Plus -->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>${mybatis-plus.version}</version>
+        </dependency>
 
     </dependencies>
 
@@ -216,4 +234,5 @@
 
         </dependencies>
     </dependencyManagement>
+
 </project>
